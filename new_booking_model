@@ -1,0 +1,92 @@
+// To parse this JSON data, do
+//
+//     final welcome = welcomeFromJson(jsonString);
+
+import 'dart:convert';
+
+List<NewBooking> newBookingFromJson(String str) => List<NewBooking>.from(json.decode(str).map((x) => NewBooking.fromJson(x)));
+
+String newBookingToJson(List<NewBooking> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+
+class NewBooking {
+  String id;
+  String cartId;
+  String timeId;
+  String userId;
+  String addressId;
+  String bookingUniqeId;
+  String date;
+  String status;
+  //DateTime appointmentDate;
+  String appointmentDate;
+  String productName;
+  String image;
+  String totalAmount;
+  String description;
+  String time;
+  String fullName;
+  String address;
+  String mobile;
+
+  NewBooking({
+    required this.id,
+    required this.cartId,
+    required this.timeId,
+    required this.userId,
+    required this.addressId,
+    required this.bookingUniqeId,
+    required this.date,
+    required this.status,
+    required this.appointmentDate,
+    required this.productName,
+    required this.image,
+    required this.totalAmount,
+    required this.description,
+    required this.time,
+    required this.fullName,
+    required this.address,
+    required this.mobile,
+  });
+
+  factory NewBooking.fromJson(Map<String, dynamic> json) => NewBooking(
+    id: json["id"],
+    cartId: json["cart_id"],
+    timeId: json["time_id"],
+    userId: json["user_id"],
+    addressId: json["address_id"],
+    bookingUniqeId: json["booking_uniqe_id"],
+    date: json["date"],
+    status: json["status"],
+   // appointmentDate: DateTime.parse(json["appointment_date"]),
+    appointmentDate: json["appointment_date"],
+    productName: json["product_name"],
+    image: json["image"],
+    totalAmount: json["total_amount"],
+    description: json["description"],
+    time: json["time"],
+    fullName: json["full_name"],
+    address: json["address"],
+    mobile: json["mobile"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "cart_id": cartId,
+    "time_id": timeId,
+    "user_id": userId,
+    "address_id": addressId,
+    "booking_uniqe_id": bookingUniqeId,
+    "date": date,
+    "status": status,
+    //"appointment_date": appointmentDate.toIso8601String(),
+    "appointment_date": appointmentDate,
+    "product_name": productName,
+    "image": image,
+    "total_amount": totalAmount,
+    "description": description,
+    "time": time,
+    "full_name": fullName,
+    "address": address,
+    "mobile": mobile,
+  };
+}
