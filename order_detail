@@ -1,0 +1,1509 @@
+import 'dart:convert';
+import 'package:QuixiCareService/model/order_detail_list_model.dart';
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:QuixiCareService/constant/api_url.dart';
+import 'package:QuixiCareService/controller/trackmap.dart';
+import 'package:QuixiCareService/view/Navagation_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../cutom_widgets/signup_textfilled.dart';
+import '../model/new_booking_model.dart';
+import '../uiltis/color.dart';
+
+class Details extends StatefulWidget {
+  //final String orderId;
+  //final String userId;
+
+  //final args = ModalRoute.of(context).settings.arguments as FoodScreenArguments ;
+  final NewBooking bookingtype;
+
+  const Details({super.key, required this.bookingtype});
+  // const Details({super.key});
+
+  @override
+  State<Details> createState() => _DetailsState();
+}
+
+class _DetailsState extends State<Details> {
+  String? retrievedId;
+  bool isLoading = true;
+  String msg="";
+  String path="";
+
+  @override
+  void initState() {
+    super.initState();
+
+    // print("welcome.....");
+    // Get.snackbar("title", "message");
+
+
+  }
+
+
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   getIdFromSharedPreferences().then((_) {
+  //     if (retrievedId != null) {
+  //       print('Retrieved profile shop ID: $retrievedId');
+  //       orderDetails();
+  //       flatdel();
+  //       CardCalulation();
+  //     } else {}
+  //   });
+  // }
+
+  // Future<void> getIdFromSharedPreferences() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   retrievedId = prefs.getString('id');
+  //   print("Retrieved ID order details order details : $retrievedId");
+  //   CardCalulation();
+  // }
+
+  List<StepData> steps = [
+    StepData(
+      title: 'Order Pending',
+      date: 'jan 23,2023',
+    ),
+    StepData(
+      title: 'Order Confirmed',
+      date: 'jan 23,2023',
+    ),
+    StepData(
+      title: 'In Progress',
+      date: 'jan 23,2023',
+    ),
+    // StepData(
+    //   title: 'Order Out Of Delivery',
+    //   date: 'jan 23,2023',
+    // ),
+    StepData(
+      title: 'Completed',
+      date: 'jan 23 ,2023',
+    ),
+  ];
+  List time = ["10:35 PM", "10:40 PM", "10:45 PM", "10:45 PM", "11:15 PM"];
+
+  String? price;
+  String? quantity;
+  String? variantsss;
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+    //Get.snackbar("title", "message");
+    // _showDeleteConfirmationPopup(context);
+    //final booking = ModalRoute.of(context)?.settings.arguments as NewBooking ;
+
+
+
+    return Scaffold(
+      backgroundColor: colors.scaffold_background_color,
+      appBar: AppBar(
+        leading: InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(
+            Icons.arrow_back,
+            color: colors.white,
+          ),
+        ),
+        backgroundColor: colors.button_color,
+        title: const Text(
+          "Order Details",
+          style: TextStyle(
+            color: colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            // child: isLoading
+            //     ? Center(
+            //         child: LoadingAnimationWidget.fourRotatingDots(
+            //         color: const Color.fromARGB(255, 12, 110, 42),
+            //         size: 50,
+            //       ))
+            //     :
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0, top: 10),
+                  child: Material(
+                    elevation: 1,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: 20.0, top: 20, right: 10, left: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Booking Number : "+widget.bookingtype.id,
+                                  //"Booking Number : 123",
+                                  style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 17),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Appointment Date : "+widget.bookingtype.appointmentDate,
+                                    //"Date : 1-4-24",
+                                    style: const TextStyle(color: Colors.grey,fontSize: 14, fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    "${widget.bookingtype.time}",
+                                    //"10:05:30",
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 5.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                // crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    // width:280,
+                                    child: Row(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 10.0),
+                                          child: Text(
+                                            "Payment Mode",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w400),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Online',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Text(
+                                  //   "Number - $mobileNumber",
+                                  //   overflow: TextOverflow.ellipsis,
+                                  // ),
+
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                         //  _makePhoneCall('$mobileNumber');
+                                          _makePhoneCall(widget.bookingtype.mobile);
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                            BorderRadius.circular(5),
+                                            border: Border.all(
+                                                color: Colors.black,
+                                                width: 0.5),
+                                          ),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(5.0),
+                                            child: Icon(Icons.phone,
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 30.0),
+                  child: ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: steps.length,
+                    itemBuilder: (context, index) {
+                      int selectedIndex = 0;
+
+                      if (orderstatuss.toString() == "In Progress") {
+                        selectedIndex = 1;
+                      } else if (orderstatuss.toString() == "Packed") {
+                        selectedIndex = 2;
+                      } else if (orderstatuss.toString() == "Ready") {
+                        selectedIndex = 3;
+                      } else if (orderstatuss.toString() == "Completed") {
+                        selectedIndex = 4;
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: w / 8,
+                            height: h / 13,
+                            alignment: Alignment.center,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: w / 25,
+                                  height: h / 30,
+                                  decoration: BoxDecoration(
+                                    color: index <= selectedIndex
+                                        ? colors.button_color
+                                        : Colors.grey,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: index <= selectedIndex
+                                      ? const Center(
+                                      child: Text(
+                                        "✓",
+                                        style: TextStyle(color: Colors.white),
+                                      ))
+                                      : null,
+                                ),
+                                if (index < steps.length - 1)
+                                  Expanded(
+                                    child: Container(
+                                      width: 2,
+                                      color: index <= selectedIndex
+                                          ? colors.button_color
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    steps[index].title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: w / 25,
+                                    ),
+                                  ),
+                                  SizedBox(height: h / 90),
+                                  index == 1
+                                      ? Text(
+                                    //"01-03-24",
+                                    "",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: w / 30,
+                                    ),
+                                  )
+                                      : index == 2
+                                      ? Text(
+                                    //"02-03-24",
+                                    "",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: w / 30,
+                                    ),
+                                  )
+                                      : index == 3
+                                      ? Text(
+                                      //"03-03-24",
+                                    "",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: w / 30,
+                                      ))
+                                      : index == 4
+                                      ? Text(
+                                    //"04-03-24",
+                                    "",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: w / 30,
+                                    ),
+                                  )
+                                      : index == 0
+                                      ? Text(
+                                   // "05-03-24",
+                                    widget.bookingtype.date,
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: w / 30,
+                                    ),
+                                  )
+                                      : const Text(""),
+                                ],
+                              ),
+                              const SizedBox(
+                                width: 20,
+                              ),
+                              selectedIndex == 3
+                                  ? index == 3
+                                  ? InkWell(
+                                onTap: () {
+                                  latlong_driver();
+                                  printAddressLatLng(addressss!);
+
+                                  // Navigator.pushReplacement(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //       builder: (context) =>
+                                  //           LiveTrackingMap(
+                                  //         destination: addressss
+                                  //             .toString(),
+                                  //         orderId: widget
+                                  //             .orderId
+                                  //             .toString(),
+                                  //       ),
+                                  //     ));
+                                },
+                                child: Container(
+                                  height: h / 20,
+                                  width: w / 2.9,
+                                  decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius:
+                                      BorderRadius.circular(10.0),
+                                      border: Border.all(
+                                          color: Colors.black,
+                                          width: 1.0)),
+                                  child: const Center(
+                                      child: Text(
+                                        "Track Your Order",
+                                        style: TextStyle(
+                                            color: Colors.white),
+                                      )),
+                                ),
+                              )
+                                  : const Text("")
+                                  : const Text(""),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Container(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          child: Expanded(
+                            child: Text("Booking Address : "+widget.bookingtype.address,
+                            //child: Text("Booking Address : abc xyz",
+                                style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)
+
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child:
+
+                //  Material(
+                       // elevation: 1,
+                       // color: Colors.white,
+                       // borderRadius: BorderRadius.circular(10),
+                       // child:
+
+                        Container(
+                          width: w,
+                          decoration: BoxDecoration(
+                            //color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 15, bottom: 10),
+
+
+                            child: FutureBuilder<List<OrderDetailList>>(
+                          future: getOrdersDetailList(widget.bookingtype.userId,widget.bookingtype.cartId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              // until data is fetched, show loader
+                              return const Center(child: CircularProgressIndicator());
+                            }
+
+                            if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}'); // Show an error message if data fetching fails
+                            }
+
+                            if (snapshot.hasData) {
+                              // once data is fetched, display it on screen (call buildPosts())
+                              final orders = snapshot.data!;
+                              return buildOrderDetailList(orders);
+
+                            } else {
+                              // if no data, show simple Text
+                              return  Text("msg="+msg);
+                            }
+                          },
+                        ),
+
+
+
+
+
+
+
+
+                  ),
+                        ),
+                     // ),
+
+
+                ),
+                // Center(
+                //   child: StreamBuilder(
+                //     stream: Stream.periodic(const Duration(seconds: 0))
+                //         .asyncMap((i) => CardCalulation()),
+                //     builder: (context, snapshot) {
+                //       if (snapshot.connectionState ==
+                //           ConnectionState.waiting) {
+                //         return buildCard(snapshot.data);
+                //       } else if (snapshot.hasError) {
+                //         return Text('Error: ${snapshot.error}');
+                //       } else {
+                //         return buildCard(snapshot.data);
+                //       }
+                //     },
+                //   ),
+                // ),
+                Visibility(
+                  visible: orderstatuss == "Pending",
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0, top: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: w / 3,
+                          height: h / 20,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await orderstatusd('Reject', ordernum.toString());
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const Nav_bar(),
+                                  ));
+                            },
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                  side: const BorderSide(color: Colors.red),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              backgroundColor:
+                              MaterialStateProperty.all(Colors.white),
+                            ),
+                            child: const Text(
+                              "Reject",
+                              style: TextStyle(color: Colors.red, fontSize: 17),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: w / 3,
+                          height: h / 20,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await orderstatusd('Accept', ordernum.toString());
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const Nav_bar(),
+                                  ));
+                            },
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                  side: const BorderSide(color: Colors.green),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              backgroundColor:
+                              MaterialStateProperty.all(Colors.white),
+                            ),
+                            child: const Text(
+                              "Accept",
+                              style:
+                              TextStyle(color: Colors.green, fontSize: 17),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
+  @override
+  Widget buildOrderDetailList(List<OrderDetailList> ordersdetaillist) {
+    // Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+
+    if(ordersdetaillist.length > 0)
+      return Padding(
+          padding: const EdgeInsets.only(bottom: 10.0),
+          child: Container(
+
+              child:
+
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ordersdetaillist.length,
+                itemBuilder: (context, index) {
+
+                  final orderdetaill = ordersdetaillist[index];
+                  String productImage = '';
+                  String productName = orderdetaill.serviceName;
+
+                  quantity = orderdetaill.quantity;
+                  price = '₹'+orderdetaill.price;
+                  variantsss = '';
+
+                  return
+
+
+                    Padding(
+                      padding: const EdgeInsets.only(bottom:15.0),
+                      child: Material(
+                         elevation: 1,
+                         color: Colors.white,
+                         borderRadius: BorderRadius.circular(10),
+                         child:
+                      Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              height: h / 9,
+                              width: w / 6,
+                              decoration: BoxDecoration(
+                                borderRadius:
+                                BorderRadius.circular(10),
+                              ),
+                              child: ClipRRect(
+                                  borderRadius:
+                                  BorderRadius.circular(20),
+
+                                  child:
+
+                                      Image.network(path+orderdetaill.serviceImage)
+                                  //Image.asset("assets/image/product.png")
+
+
+
+                                // child: Image.network(
+                                //   productImage,
+                                //   fit: BoxFit.fill,
+                                //   scale: 10,
+                                // ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceAround,
+                          children: [
+                            Container(
+                              height: h / 7,
+                              width: w / 6,
+                              child: Center(
+                                child: Text(
+                                  productName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: h / 7,
+                              width: w / 6,
+                              child: Center(
+                                child: Text(
+                                  quantity!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: h / 7,
+                              width: w / 8,
+                              child: Center(
+                                child: Text(
+                                  variantsss!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: h / 7,
+                              width: w / 6,
+                              child: Center(
+                                child: Text(
+                                  price!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            driverAssignStatus == '0' &&
+                                orderstatuss == 'Pending'
+                                ? PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                if (value == 'delete' &&
+                                    products.isNotEmpty) {
+                                  var product =
+                                  products[index];
+                                  productIdToDelete =
+                                      product['productId']
+                                          .toString();
+                                  priceToDelete =
+                                      product['price']
+                                          .toString();
+
+                                  String productIdString =
+                                  productIdToDelete
+                                      .toString();
+                                  String priceString =
+                                  priceToDelete
+                                      .toString();
+
+                                  print(
+                                      "Tapped Product ID: 2");
+
+                                  if (2 == 1) {
+                                    //if (products.length == 1 &&   products[index]["qty"] == "1" ) {
+                                    bool shouldDelete =
+                                    await _showDeleteConfirmationPopup(
+                                        context);
+                                    if (shouldDelete) {
+                                      _showDeleteConfirmationPopup(
+                                          context);
+                                      //await deleteCard();
+                                      print(
+                                          "Tapped Product Price: $priceString");
+                                    }
+                                  } else {
+                                    _showPopupdelete(context);
+                                    //await deleteCard();
+                                    print(
+                                        "Tapped Product Price: $priceString");
+                                  }
+                                } else if (value == 'edit') {
+                                  var product =
+                                  products[index];
+                                  productIdToupdtee =
+                                      product['productId']
+                                          .toString();
+                                  print(
+                                      "Tapped productIdToupdtee ID: $productIdToupdtee");
+                                  print(
+                                      "Tapped Product ID: $quantity");
+                                  print(
+                                      "Product Quantity: ${product["qty"]}");
+
+                                  selectedProductQuantity =
+                                      product["qty"]
+                                          .toString();
+                                  print(
+                                      "Product Quantity: $selectedProductQuantity");
+                                  if (products.length >= 1) {
+                                    _showPopup(context);
+                                  }
+                                }
+                              },
+                              itemBuilder: (BuildContext
+                              context) =>
+                              <PopupMenuEntry<String>>[
+                                const PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('Delete'),
+                                ),
+                                const PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Text('Edit'),
+                                ),
+                              ],
+                            )
+                                : const SizedBox.shrink(),
+                          ],
+                        ),
+                      ],
+                                        ),
+
+                      ),
+                    );
+
+
+
+
+                },
+              ),
+
+
+
+
+
+          ));
+    else
+      return Center(child: new Container(child:Text(msg)));
+  }
+
+
+
+  // function to fetch data from api and return future list of posts
+  Future<List<OrderDetailList>> getOrdersDetailList(String userid , String cartid) async {
+
+   ///// final String apiUrl = "https://logicalsofttech.com/QuixiCare/Vendor_api/user_booking_details";
+    //////final Map<String, String> headers = {'Content-Type': 'application/json'};
+
+   ////// final Map<String, String> data = {
+
+     ////// 'user_id' : userid,
+     ////// 'cart_id' : cartid,
+      //'orderId': ordernum.toString(),
+      // 'userId': widget.userId.toString(),
+      //'order_status': (action == 'Accept') ? 'In Progress' : 'Cancel',
+      //'vender_status': (action == 'Accept') ? 'accept' : 'reject',
+
+    ////};
+
+    //////final String requestBody = json.encode(data);
+
+
+
+   // var url = Uri.parse("https://logicalsofttech.com/QuixiCare/Vendor_api/user_booking_details");
+   // final response = await http.get(url, headers: {"Content-Type": "application/json"});
+   // try{
+    ///////////////final response = await http.post(Uri.parse(apiUrl),
+       //////////// headers: headers, body: requestBody);
+   // } catch (e) {
+     // print("Error: $e");
+   // }
+
+
+
+
+    final Uri uri = Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/user_booking_details');
+    final map = <String, dynamic>{};
+    map['user_id'] = userid;
+    map['cart_id'] = cartid;
+    final response = await http.post(
+      uri,
+      body: map,
+    );
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+
+      print("userid="+userid);
+      print("cartid="+cartid);
+
+      final Map<String,dynamic> result = json.decode(response.body);
+      List<dynamic> body = [];
+      if(result["result"] == "true") {
+        body = result["service_details"];
+
+        path = result["path"];
+      }
+      else {
+        print("result false...");
+        print(result);
+
+        body = [];
+        msg = result["msg"];
+
+      }
+      print(body);
+      return body.map((e) => OrderDetailList.fromJson(e)).toList();
+
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load');
+    }
+
+
+  }
+
+
+
+
+  bool buttonsVisible = false;
+  int? grandTotal;
+  var mobileNumber;
+  var pramentMode;
+  int? deliveryCharge;
+
+  String? addressss;
+  String? ordernum;
+  String? carddnum;
+  String? dateee;
+  String? modeee;
+  String? productIdToDelete;
+  String? productIdToupdtee;
+  String? priceToDelete;
+  String? driverName;
+  String? userName;
+  String? driverAssignStatus;
+  String? orderstatuss;
+  String? venderstatus;
+  int? ordernumberneww;
+  // int? phonenumberrrr;
+
+  String? orderr_pla;
+  String? orderr_acc;
+  String? orderr_pac;
+  String? orderr_out;
+  String? orderr_dil;
+
+  List<Map<String, dynamic>> products = [];
+
+  Future<void> orderDetails() async {
+    const String apiUrl = '';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final Map<String, String> data = {
+      //'orderId': widget.orderId,
+    };
+    print(data);
+    print("+++++++++++");
+    final String requestBody = json.encode(data);
+    try {
+      final response = await http.post(Uri.parse(apiUrl),
+          headers: headers, body: requestBody);
+
+      if (response.statusCode == 200) {
+        //print("Response: ${response.body}");
+        final jsonResponse = json.decode(response.body);
+        print(jsonResponse);
+        print("+++++++++++--------");
+        Map<String, dynamic> orderData = jsonResponse['data'][0];
+        print(orderData);
+        print("+++++++++++--------3333");
+        grandTotal = orderData['grand_total'];
+        deliveryCharge = orderData['delivery_charge'];
+        addressss = orderData['address'];
+
+        dateee = orderData['order_date'];
+        ordernum = orderData['orderId'];
+        ordernumberneww = orderData['order_no'];
+        modeee = orderData['payment_mode'];
+        carddnum = orderData['cartId'];
+
+        driverName = orderData['driver_name'];
+        //  mobileNumber = orderData["userId"]['phone'];
+
+        driverAssignStatus = orderData['driver_assign_status'];
+        orderstatuss = orderData['order_status'];
+        venderstatus = orderData['vender_status'];
+
+        orderr_pla = orderData['order_date'];
+        orderr_acc = orderData['in_progress_date'];
+        orderr_pac = orderData['asign_date'];
+        orderr_out = orderData['delivery_date'];
+        orderr_dil = orderData['completed_date'];
+
+        // userName = orderData['userId']['user_name'];
+        print("Customer Name: $userName");
+
+        List<dynamic> productsData = jsonResponse['data'][0]['products'];
+        products = List<Map<String, dynamic>>.from(productsData);
+        for (var product in products) {
+          String productId = product['productId'];
+          String price = '\u{20B9} ${product['price']}';
+        }
+
+        for (var product in products) {
+          String productImage =
+              'http://103.104.74.215:3026/uploads/' + product['product_image'];
+          String productName = product['description'];
+          String variant = "Basmati";
+          String quantity = "1 Kg";
+          String price = '\u{20B9} ${product['price']}';
+        }
+
+        setState(() {
+          isLoading = false;
+        });
+      } else {
+        print("API request failed with status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> orderstatusd(String action, String ordernum) async {
+    if (ordernum == null) {
+      print("Error: orderId is null");
+      return;
+    }
+    print("****$widget.userId");
+
+    final String apiUrl =
+        'http://103.104.74.215:3026/needoo/digital/update_order_status';
+    final Map<String, String> headers = {'Content-Type': 'application/json'};
+
+    final Map<String, String> data = {
+      'orderId': ordernum.toString(),
+      // 'userId': widget.userId.toString(),
+      'order_status': (action == 'Accept') ? 'In Progress' : 'Cancel',
+      'vender_status': (action == 'Accept') ? 'accept' : 'reject',
+    };
+
+    final String requestBody = json.encode(data);
+    //print('Request Body: $requestBody');
+
+    try {
+      final response = await http.post(Uri.parse(apiUrl),
+          headers: headers, body: requestBody);
+      print('Response Status Code: ${response.statusCode}');
+      // print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        print('Decoded Response: $jsonResponse');
+        //await orderDetails();
+      } else {
+        print("API request failed with status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error in orderstatus: $e");
+    }
+  }
+
+  Future<void> deleteCard() async {
+    final String apiUrl =
+        'http://103.104.74.215:3026/needoo/digital/delete_cart';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final Map<String, String> data = {
+      'cartId': carddnum.toString(),
+      'orderId': ordernum.toString(),
+      'productId': productIdToDelete.toString(),
+      'price': priceToDelete.toString(),
+    };
+
+    final String requestBody = json.encode(data);
+    try {
+      final response = await http.post(Uri.parse(apiUrl),
+          headers: headers, body: requestBody);
+
+      if (response.statusCode == 200) {
+        print("Delete Response: ${response.body}");
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('Product Delete successfully'),
+        //     duration: Duration(seconds: 2), // Adjust the duration as needed
+        //     backgroundColor: Colors.red,
+        //   ),
+        // );
+        final jsonResponse = json.decode(response.body);
+      } else {
+        print(
+            "Delete API request failed with status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Delete Error: $e");
+    }
+  }
+
+  TextEditingController priceee = TextEditingController();
+  TextEditingController qunanity = TextEditingController();
+
+  Future<void> updateCard() async {
+    final String apiUrl =
+        'http://103.104.74.215:3026/needoo/digital/update_cart';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final Map<String, String> data = {
+      'cartId': carddnum.toString(),
+      'orderId': ordernum.toString(),
+      'productId': productIdToupdtee.toString(),
+      //'price': priceee.text.toString(),
+      'qty': qunanity.text.toString(),
+    };
+
+    print('Upload Data: $data');
+    final String requestBody = json.encode(data);
+    try {
+      final response = await http.post(Uri.parse(apiUrl),
+          headers: headers, body: requestBody);
+
+      if (response.statusCode == 200) {
+        print("Delete Response: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product Update successfully'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+        final jsonResponse = json.decode(response.body);
+      } else {
+        print(
+            "update API request failed with status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("update Error: $e");
+    }
+  }
+
+  String selectedProductQuantity = '';
+
+  void _showPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          actions: <Widget>[
+            const Padding(
+              padding: EdgeInsets.only(top: 10.0, bottom: 10),
+              child: Text(" Please specify the quantity you want to reduce ..",
+                  style: TextStyle(color: Colors.black87, fontSize: 16)),
+            ),
+            const Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: EdgeInsets.only(top: 10.0, bottom: 10),
+                child: Text("Quantity",
+                    style: TextStyle(color: Colors.black87, fontSize: 16)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: Signup_textfilled(
+                textfilled_height: 17,
+                textfilled_weight: 1,
+                textcont: qunanity,
+                length: 50,
+                keytype: TextInputType.name,
+                hinttext: "$selectedProductQuantity",
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10.0),
+              child: Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: 120,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      int parsedQuantity = int.parse(qunanity.text.toString());
+
+                      if (parsedQuantity > 0 &&
+                          parsedQuantity < int.parse(selectedProductQuantity)) {
+                        await updateCard();
+                        Navigator.of(context).pop();
+                      } else {
+                        _orderdaitailssss(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        side: const BorderSide(color: Colors.black, width: 0.3),
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text(
+                      'Update',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  double driverLatitude = 0.0;
+  double driverLongitude = 0.0;
+  double dropeeLatitude = 0.0;
+  double dropeeLongitude = 0.0;
+
+  void _showPopupdelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Confirmation'),
+          content: const Text(
+              '"Do you really want to remove this item from the order?"'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await deleteCard();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontSize: 18)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> latlong_driver() async {
+    final String apiUrl =
+        'http://103.104.74.215:3026/needoo/digital/get_driver_latlog';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final Map<String, String> data = {
+      'shopId': retrievedId.toString(),
+      'orderId': ordernum.toString(),
+    };
+
+    print('Upload Data: $data');
+    final String requestBody = json.encode(data);
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+
+        final location = jsonResponse['data']['location']['coordinates'];
+        driverLatitude = location[0];
+        driverLatitude = location[1];
+
+        print('Latitude of driver : $driverLatitude');
+        print('Longitude: of driver  $driverLatitude');
+      } else {
+        print(
+            "Update API request failed with status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Update Error: $e");
+    }
+  }
+
+  Future<void> printAddressLatLng(String addressss) async {
+    try {
+      List<Location> locations = await locationFromAddress(addressss);
+      if (locations.isNotEmpty) {
+        dropeeLatitude = locations.first.latitude;
+        dropeeLongitude = locations.first.longitude;
+
+        print('Longitude of drop location $addressss');
+        print('Longitude of  drop location $dropeeLatitude');
+        print('Longitude of  drop location $dropeeLongitude');
+      } else {
+        print('No coordinates found for $addressss');
+      }
+    } catch (e) {
+      print('Error getting coordinates: $e');
+    }
+  }
+
+  Future<bool> _showDeleteConfirmationPopup(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Reject'),
+          content: const Text(
+              ' "Do you really want to remove all items from this order and reject this order?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                ///// Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancel',
+                  style: TextStyle(color: Colors.green, fontSize: 16)),
+            ),
+            TextButton(
+              onPressed: () async {
+                //// await orderstatusd('Reject', ordernum.toString());
+                //// Navigator.of(context).pop(false);
+                //// Get.off(const Nav_bar());
+              },
+              child: const Text('Reject',
+                  style: TextStyle(color: Colors.green, fontSize: 16)),
+            ),
+          ],
+        );
+      },
+    ) ??
+        false; // Handle the case where showDialog returns null
+  }
+
+  _makePhoneCall(String phoneNumber) async {
+    final url = 'tel:$phoneNumber';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  int? flatDeliveryCharge;
+  int? deliveryChargeeeee;
+
+  Future<void> flatdel() async {
+    if (retrievedId == null) {
+      print('Retrieved ID is null');
+      return;
+    }
+
+    final url =
+    Uri.parse('http://103.104.74.215:3026/needoo/digital/getVenderProfile');
+    print("inside api $retrievedId");
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'shopId': retrievedId!,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('POST request successful');
+      print('Response data: ${response.body}');
+
+      final parsedResponse = jsonDecode(response.body);
+
+      if (parsedResponse['data'] != null) {
+        flatDeliveryCharge = parsedResponse['data']['flat_delivery_charge'];
+        deliveryChargeeeee = parsedResponse['data']['delivery_charge'];
+
+        print('Flat Delivery Charge: $flatDeliveryCharge');
+        print('Delivery Charge: $deliveryCharge');
+      } else {
+        print('Response does not contain "data" property.');
+      }
+    } else {
+      print('POST request failed with status: ${response.statusCode}');
+      print('Response data: ${response.body}');
+    }
+  }
+
+  Widget buildCard(Map<String, dynamic>? data) {
+    if (data == null) {
+      return const Text('Data not available');
+    }
+
+    return Card(
+      // margin: EdgeInsets.only(right: 20.0,left: 20),
+      child: Column(
+        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ListTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total Price:'),
+                Text('\u{20B9}${data['total_price']}'),
+              ],
+            ),
+          ),
+          ListTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Delivery Fee:'),
+                Text(
+                    '\u{20B9}${data['delivery_charge'] + data['flat_delivery_charge']}'),
+              ],
+            ),
+          ),
+          // ListTile(
+          //   title: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Text('Service Charge: '),
+          //       Text(' ${data['service_charge']}'),
+          //     ],
+          //   ),
+          // ),
+          ListTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Grand Total:'),
+                Text('\u{20B9}${data['grand_total']}'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+
+
+
+  Future<Map<String, dynamic>> CardCalulation() async {
+    final String apiUrl =
+        'http://103.104.74.215:3026/needoo/digital/cart_calculation';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final Map<String, String> requestData = {
+      // "userId": widget.userId.toString(),
+      "cartId": carddnum.toString()
+    };
+
+    final String requestBody = json.encode(requestData);
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return responseData;
+      } else {
+        print("API request failed with status code: ${response.statusCode}");
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print("Error: $e");
+      throw Exception('Failed to load data');
+    }
+  }
+
+  void _orderdaitailssss(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+              'You cannot reduce the quantity to 0 or lesser. Kindly delete the item from the order, in case you want to remove the item...',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Ok',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontSize: 18)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class StepData {
+  final String title;
+  final String? subtitle;
+  final String date;
+
+  final String? assetImage;
+
+  StepData({
+    required this.title,
+    this.subtitle,
+    required this.date,
+    this.assetImage,
+  });
+}
