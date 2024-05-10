@@ -1,0 +1,777 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:QuixiCareService/constant/api_url.dart';
+import 'package:QuixiCareService/view/signup%20form/signup_form2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../cutom_widgets/signup_textfilled.dart';
+import '../../uiltis/color.dart';
+import '../login.dart';
+import 'package:get/get.dart';
+
+class Signup_form1 extends StatefulWidget {
+  // final int id;
+  // const Signup_form1({super.key, required this.id});
+  @override
+  State<Signup_form1> createState() => _Signup_form1State();
+
+}
+
+class _Signup_form1State extends State<Signup_form1> {
+
+  bool isLoading = false;
+  String categoryid = "";
+  //static int counter = 0;
+  //static int bankaccnostep=1;
+  //static int bankaccnamestep=1;
+  //bool isformValid = false;
+  final successcolor = MaterialStateProperty.all(Colors.green);
+  final errorcolor = MaterialStateProperty.all(Colors.grey);
+
+
+  String dropdownvalue = "All categories";
+  List<String> categorie = [
+    "All categories",
+    "Food",
+    "Fashion",
+    "Beauty",
+    "Home Appliances",
+    "Gadget",
+    "Toys"
+  ];
+  File? _image;
+  var catId = int;
+  TextEditingController miniOrderController = TextEditingController();
+  TextEditingController faltcon = TextEditingController();
+  TextEditingController servicesvalble = TextEditingController();
+  TextEditingController fssainum = TextEditingController();
+  TextEditingController perKmDeliveryChargeController = TextEditingController();
+  TextEditingController maxDeliveryServiceDistanceController =
+      TextEditingController();
+  TextEditingController textEditingController = TextEditingController();
+  late String selectedDropdownItem = '';
+  int p = 0;
+
+
+
+
+  TextEditingController bank_aqccountno = TextEditingController();
+  TextEditingController bankAccName = TextEditingController();
+  TextEditingController manager_id = TextEditingController();
+  TextEditingController bank_ifsc = TextEditingController();
+  TextEditingController gstnum = TextEditingController();
+  List<String> selectedItems = [];
+  List<String> items = [];
+  Map<String, String> categoryMap = {};
+  List selectedCategoryIds = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+     _fetchCategoryList();
+
+
+    bank_aqccountno.addListener(() {
+     setState(() {
+
+     });
+    });
+
+    bankAccName.addListener(() {
+     setState(() {
+
+     });
+    });
+
+    bank_ifsc.addListener(() {
+      setState(() {
+
+      });
+    });
+
+
+
+
+
+
+
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: colors.scaffold_background_color,
+      appBar: AppBar(
+        backgroundColor: colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "Vendor details",
+          style: TextStyle(fontWeight: FontWeight.bold, color: colors.black),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Login(),
+                ));
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+            color: colors.black,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Align(
+                alignment: Alignment.center,
+                child: Text(
+                  "Profile photo",
+                  style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: GestureDetector(
+                    onTap: () {
+                       _showImagePickerOptions();
+                    },
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.grey,
+                          maxRadius: 60,
+                          child: _image != null
+                              ? CircleAvatar(
+                                  backgroundImage: FileImage(_image!),
+                                  radius: 60,
+                                )
+                              : const CircleAvatar(
+                                  radius: 64,
+                                  backgroundColor: Colors.white,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors
+                                        .grey, // Change the color as needed
+                                  ), // Change the background color as needed
+                                ),
+                        ),
+                      ],
+                    )),
+              ),
+
+
+
+
+
+              const SizedBox(height: 20),
+              const Text("Select Category",
+                  style: TextStyle(color: Colors.black87, fontSize: 16)),
+              const SizedBox(height: 10),
+              Container(
+                color: Colors.white,
+                child: DropdownButton<String>(
+                  items: items.map((item) {
+                   // selectedItems=[];
+                   // selectedCategoryIds=[];
+                    return DropdownMenuItem<String>(
+                      value: item,
+                      child: Row(
+                        children: [
+                          if (selectedItems.contains(item)) const Icon(Icons.check),
+                          const SizedBox(width: 10),
+                          Text(item),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  hint: const Text('Select Category'),
+                  onChanged: (value) {
+
+                    setState(() {
+                      //selectedCategoryIds=[];
+                      selectedItems =[];
+
+                      if (selectedItems.contains(value)) {
+                        selectedItems.remove(value);
+                        selectedCategoryIds.remove(categoryMap[value]);
+                      } else {
+                        selectedItems.add(value!);
+                        selectedCategoryIds.add(categoryMap[value]!);
+                      }
+                       categoryid = categoryMap[value].toString();
+
+                      print('Selected Category $categoryid IIDssss: $selectedCategoryIds');
+                    });
+                    setState(() {});
+                  },
+                  isExpanded: true,
+                  icon: const Icon(Icons.arrow_drop_down),
+                  iconSize: 24.0,
+                  elevation: 16,
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
+
+              //Text('Selected Items: ${selectedItems.join(", ")}', style: TextStyle(color: Colors.grey)),
+
+              const SizedBox(
+                height: 10,
+              ),
+            /*  Wrap(
+                spacing: 5,
+                children: categorie.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 2, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        // Background color
+                        borderRadius: BorderRadius.circular(16.0),
+                        // Rounded corners
+                        border: Border.all(color: Colors.black, width: 0.2),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4.0, left: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (dropdownvalue.contains(item))
+                              const Icon(Icons.check, color: Colors.green),
+                            const SizedBox(width: 3),
+                            Text(
+                              item,
+                              style: const TextStyle(
+                                color: Colors.black, // Text color
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),*/
+              Wrap(
+                spacing: 5,
+                children: selectedItems.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        // Background color
+                        borderRadius: BorderRadius.circular(16.0),
+                        // Rounded corners
+                        border: Border.all(color: Colors.black, width: 0.2),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4.0, left: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (selectedItems.contains(item))
+                              const Icon(Icons.check, color: Colors.green),
+                            const SizedBox(width: 3),
+                            Text(
+                              item,
+                              style: const TextStyle(
+                                color: Colors.black, // Text color
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              const Text("Bank Name*",
+                  style: TextStyle(color: Colors.black87, fontSize: 14)),
+              const SizedBox(height: 10),
+              Signup_textfilled(
+                textfilled_height: 17,
+                textfilled_weight: 1,
+                textcont: bankAccName,
+                length: 20,
+                keytype: TextInputType.name,
+                hinttext: "Bank Name",
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              const Text("Bank account no*",
+                  style: TextStyle(color: Colors.black87, fontSize: 14)),
+              const SizedBox(height: 10),
+              Signup_textfilled(
+                textfilled_height: 17,
+                textfilled_weight: 1,
+                textcont: bank_aqccountno,
+                length: 15,
+                keytype: TextInputType.name,
+                hinttext: "Account no",
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+
+              const Text("Bank IFSC Code*",
+                  style: TextStyle(color: Colors.black87, fontSize: 14)),
+              const SizedBox(height: 10),
+              Signup_textfilled(
+                textfilled_height: 17,
+                textfilled_weight: 1,
+                textcont: bank_ifsc,
+                length: 11,
+                keytype: TextInputType.name,
+                hinttext: "IFSC Code",
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+
+
+              Text("GST Number",
+                  style: TextStyle(color: Colors.black87, fontSize: 14)),
+              SizedBox(height: 10),
+              Signup_textfilled(
+                textfilled_height: 17,
+                textfilled_weight: 1,
+                textcont: gstnum,
+                length: 15,
+                keytype: TextInputType.name,
+                hinttext: "GST Number",
+              ),
+
+              SizedBox(
+                height: 20,
+              ),
+
+              isLoading == true ? Center(child: CircularProgressIndicator()) :
+              Container(
+                width: double.infinity,
+                height: 50,
+                child:
+
+
+                ElevatedButton(
+                  onPressed: () async {
+                    if (bankAccName.text.isEmpty
+                        ||
+                        bank_aqccountno.text.isEmpty
+                       ||
+                        bank_ifsc.text.isEmpty
+                       ||
+                        selectedCategoryIds.length == 0
+
+
+                       // ||
+                       // gstnum.text.isEmpty
+                      )
+
+                    {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Please fill in all required fields '),
+                        ),
+                      );
+
+                      return;
+                    }
+
+
+                    else {
+                      setState(() {
+                        isLoading=true;
+                      });
+                      VendorSaveDetailApi();
+                    }
+
+                   /* Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Signup_form2()),
+                    );*/
+                  },
+                  child: const Text("Next" , style: TextStyle(fontSize: 20)),
+                  style: ButtonStyle(
+                    foregroundColor:
+                    MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                        if (
+                            bank_aqccountno.text.isEmpty ||
+                            bankAccName.text.isEmpty ||
+                            bank_ifsc.text.isEmpty ||
+                                selectedCategoryIds.length == 0
+                             //   ||
+                              //  categoryid.isEmpty
+
+
+                        ) {
+                          return Colors.purple;
+                        }
+                        return Colors.white;
+                      },
+
+                    ),
+
+                    backgroundColor:
+                    MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                        if (
+                            bank_aqccountno.text.isEmpty ||
+                            bankAccName.text.isEmpty ||
+                            bank_ifsc.text.isEmpty ||
+                                selectedCategoryIds.length == 0
+                            //    ||
+                           // categoryid.isEmpty
+
+
+                        ) {
+                          return Colors.grey;
+                        }
+                        return Colors.green;
+                      },
+
+                    ),
+
+
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  //-----------image------------
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.only(bottom: 20),
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openGallery();
+                },
+              ),
+
+               _image != null ?
+                ListTile(
+                  leading: const Icon(Icons.image),
+                  title: const Text('Remove Photo'),
+                  onTap: () {
+                    setState(() {
+                      _image = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                )
+               : new SizedBox(),
+
+
+              _image != null ?
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('View Photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  showphotodialog(context);
+
+                },
+              )
+                  : new SizedBox(),
+
+
+
+
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+ Future showphotodialog (BuildContext context) async {
+   await showDialog(
+       context: context,
+       //builder: (_) => ImageDialog()
+       builder: (_) =>
+
+       _image == null ?
+       Dialog(
+       child:
+
+       Container(
+
+       width: MediaQuery.of(context).size.height * 0.7,
+       height: MediaQuery.of(context).size.height * 0.4,
+
+       decoration:
+
+
+       BoxDecoration(
+
+         image: DecorationImage(
+       image: ExactAssetImage('assets/image/profile_blank.jpg') ,
+       //image: FileImage(_image!),
+       //  image: NetworkImage('https://picsum.photos/250?image=9'),
+       fit: BoxFit.cover
+       ),
+
+
+/*
+           color: Colors.green,
+           border: Border.all(
+             color: Colors.red,
+           ),
+           borderRadius: BorderRadius.all(Radius.circular(100))
+*/
+
+
+
+       ),
+
+
+       ),
+       )
+       :
+
+       Dialog(
+         child:
+
+         Container(
+           width: MediaQuery.of(context).size.height * 0.7,
+           height: MediaQuery.of(context).size.height * 0.4,
+           decoration: BoxDecoration(
+               image:
+               DecorationImage(
+                 //image: ExactAssetImage('assets/image/profile_blank.jpg') ,
+                   image: FileImage(_image!),
+                   //  image: NetworkImage('https://picsum.photos/250?image=9'),
+                   fit: BoxFit.cover
+               ),
+
+
+/*
+               borderRadius: BorderRadius.circular(10),
+           color: Colors.white,
+           border: Border(
+             left: BorderSide(
+               color: Colors.green,
+               width: 3,
+             ),
+           ),
+*/
+
+
+
+
+
+
+
+           ),
+         ),
+       )
+
+
+   );
+
+
+
+
+ }
+
+
+  File getImageFileFromPath(String path) {
+    File imageFile = File(path);
+    return imageFile;
+  }
+
+  void _openCamera() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageCamera = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (pickedImageCamera != null) {
+      setState(() {
+        _image = File(pickedImageCamera.path);
+        print("CameraImagePick........${_image!.path}");
+        String imagePath = _image.toString();
+
+        File imageFile = getImageFileFromPath(imagePath);
+
+        // Now you can use the imageFile object to upload or manipulate the image
+        print('Image file path: ${imageFile.path}');
+      });
+    }
+  }
+
+  void _openGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageGallery = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImageGallery != null) {
+      setState(() {
+        _image = File(pickedImageGallery.path);
+      });
+    }
+  }
+
+  //-------------  Api Calling ---------------
+
+  Future<void> _fetchCategoryList() async {
+    final apiUrl =
+    Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/get_category');
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final categoryList = json.decode(response.body)['data'] as List;
+        setState(() {
+          items = categoryList.map((category) {
+            final categoryId = category['id'].toString();
+            final categoryName = category['category_name'].toString();
+            categoryMap[categoryName] = categoryId;
+            print("catIDDD.......$categoryId");
+            return categoryName;
+          }).toList();
+          selectedItems = [];
+        });
+
+        // Add this print statement to display the response body data
+        print('Response Body Data: ${response.body}');
+      } else {
+        print(
+            'Failed to fetch category list with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error during category list fetch: $e');
+    }
+  }
+
+  //------------- Api calling----------------
+
+  Future<void> VendorSaveDetailApi() async {
+
+    try{
+      var request = http.MultipartRequest('POST', Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/vendor_save_details'));
+      SharedPreferences p = await SharedPreferences.getInstance();
+      request.fields['vendor_id'] = p.getString("userid").toString();
+      request.fields['cat_id'] = categoryid.toString();
+      request.fields['bank_account_name'] = bankAccName.text.toString();
+      request.fields['bank_account_number'] = bank_aqccountno.text.toString();
+      request.fields['ifsc_code'] = bank_ifsc.text.toString();
+      request.fields['gst_number'] = gstnum.text.toString();
+      if (_image != null) {
+        final imageFile = await http.MultipartFile.fromPath(
+          'image',
+          _image!.path,
+          contentType: MediaType('image','jpeg'),
+        );
+        request.files.add(imageFile);
+      }else{
+        print("image not add");
+      }
+
+      http.StreamedResponse response = await request.send();
+      print("response.........$response");
+
+      if (response.statusCode == 200) {
+        setState(() {
+          isLoading=false;
+        });
+        print("passs.....${await response.stream.bytesToString()}");
+
+        Get.to(() => Signup_form2());
+       // Get.snackbar('signup Succesfull','congratulations');
+        Get.snackbar("Note", "Bank Details Updated successfully");
+
+      }
+      else {
+        Get.snackbar('signup faild Faild','error');
+      }
+
+    }catch(e){
+      Get.snackbar('Exception', e.toString());
+    }
+  }
+
+
+
+
+
+
+
+}
+
+
+/*
+
+class ImageDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.4,
+        decoration: BoxDecoration(
+            image: DecorationImage(
+                image: ExactAssetImage('assets/image/profile_blank.jpg'),
+
+                fit: BoxFit.cover
+            )
+        ),
+      ),
+    );
+  }
+}
+
+ */
