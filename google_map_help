@@ -1,0 +1,21 @@
+https://github.com/pinkeshdarji/google_maps_flutter/blob/master/lib/simple_map.dart
+
+https://medium.com/@samra.sajjad0001/a-comprehensive-guide-to-using-google-maps-in-flutter-3fbc0f7d469e
+
+https://flutterawesome.com/how-to-use-google-map-place-api-in-flutter-app/
+
+https://fredrick-m.medium.com/google-places-api-with-flutter-ebac822a7546
+
+https://developers.google.com/maps/documentation/places/web-service/autocomplete
+
+https://maps.googleapis.com/maps/api/place/details/json?placeid=ChIJ-wY0QK8CYzkRq4t_EUuDUFs&key=AIzaSyBL-NPdBE4Mmcr7l5qaA5GwEs2w-yQcjEM
+
+https://maps.googleapis.com/maps/api/place/autocomplete/json?input=vij&key=AIzaSyBL-NPdBE4Mmcr7l5qaA5GwEs2w-yQcjEM&sessiontoken=1234567890&components=country:in
+
+
+Google Place Details is the answer.
+
+From the place_id you got,
+ query Place Details something like
+ https://maps.googleapis.com/maps/api/place/details/json?placeid={placeid}&key={key} 
+and you can get the lat and lng from result.geometry.location JSON.
