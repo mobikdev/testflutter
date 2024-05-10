@@ -1,0 +1,285 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../cutom_widgets/button.dart';
+import '../uiltis/color.dart';
+import 'Navagation_bar.dart';
+
+class Verify extends StatefulWidget {
+  Verify();
+
+  @override
+  State<Verify> createState() => _VerifyState();
+}
+
+class _VerifyState extends State<Verify> {
+  String otp = '';
+  String otpResendValue = '';
+  String mobiles = '';
+  bool showCenter = false;
+
+  int _secondsRemaining = 30;
+  late Timer _timer;
+  TextEditingController otpController = TextEditingController();
+
+
+
+  void getMobileFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      mobiles = prefs.getString('mobile') ?? '';
+    });
+  }
+
+  Future<bool> verifyOTP(vendor_id, String otp) async {
+    final Uri url =
+        Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/verify_otp');
+
+    final Map<String, String> requestBody = {
+      'vendor_id': vendor_id,
+      'otp': otp,
+    };
+
+    try {
+      final http.Response response = await http.post(
+        url,
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['result'] == 'true') {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setBool("isLogin", true);
+          Get.offAll( const Nav_bar());
+          print("login Sucessfully")
+;          return true;
+        } else {
+          print('HTTP Error: Status Code ${response.statusCode}');
+          return false;
+        }
+      } else {
+        Get.snackbar('Note','Please enter correct otp');
+        print('HTTP Error: Status Code ${response.statusCode}');
+        if (response.body.isNotEmpty) {
+          print('Response Body: ${response.body}');
+        }
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  String errorMessage = '';
+  String existingOTP = "3284";
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer when the screen is disposed
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  icon: const Padding(
+                    padding: EdgeInsets.only(left: 10.0),
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: colors.black,
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    const Text(
+                      "Verify Mobile Number",
+                      style: TextStyle(
+                        color: colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      "",
+                      style: const TextStyle(
+                        color: colors.black,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Text(
+                      'Your OTP: $otp',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10)),
+                      height: h / 15,
+                      width: w / 1,
+                      child: Center(
+                        child: TextFormField(
+                          controller: otpController,
+                          textAlign: TextAlign.center,
+
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(6)
+                          ],
+                          decoration: InputDecoration(
+                            focusColor: Colors.black,
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: colors.black),
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            border: OutlineInputBorder(
+                              borderSide: const BorderSide(color: colors.black),
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Button_widget(
+                      onpressed: () async {
+                        SharedPreferences p = await SharedPreferences.getInstance();
+                        verifyOTP(p.getString("userid").toString(), otpController.text);
+                      },
+                      button_height: 17,
+                      button_weight: 1,
+                      buttontext: 'Verify & Continue',
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                   // Text(
+                    //  'Time Remaining: $_secondsRemaining seconds',
+                    //  style: const TextStyle(fontSize: 14),
+                   // ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      errorMessage,
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                    if (showCenter)
+                      Center(
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "Didn't receive OTP?",
+                                  style: TextStyle(color: Color(0xff707684)),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: const Text("Resend OTP",
+                                      style: TextStyle(
+                                          color: colors.button_color)),
+                                )
+                              ],
+                            ),
+                            Text(
+                              'Your Resent OTP: $otpResendValue',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  //
+  // Future<void> resendOTP(String mobile, String fcm) async {
+  //   final Uri url =
+  //       Uri.parse('http://103.104.74.215:3026/needoo/digital/ResendOtp');
+  //   final Map<String, String> requestBody = {
+  //     'mobile': mobile,
+  //     'fcm': fcm,
+  //   };
+  //
+  //   try {
+  //     final http.Response response = await http.post(
+  //       url,
+  //       body: requestBody,
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> responseData = json.decode(response.body);
+  //       final int newOtpInt = responseData['data']['otp'];
+  //       final String newOtp = newOtpInt.toString();
+  //
+  //       setState(() {
+  //         otpResendValue = newOtp;
+  //       });
+  //
+  //       print('OTP from Response: $newOtp');
+  //     } else {
+  //       print('HTTP Error: Status Code ${response.statusCode}');
+  //       if (response.body.isNotEmpty) {
+  //         print('Response Body: ${response.body}');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('Error: An exception occurred while resending OTP: $e');
+  //   }
+  // }
+}
