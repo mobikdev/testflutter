@@ -1,0 +1,590 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:get/get.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+
+import 'package:image_picker/image_picker.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../uiltis/color.dart';
+import '../login.dart';
+
+import 'package:http_parser/http_parser.dart';
+
+
+class Signup_form2 extends StatefulWidget {
+  @override
+  State<Signup_form2> createState() => _Signup_form2State();
+}
+
+class _Signup_form2State extends State<Signup_form2> {
+  bool isLoading = false;
+  File? _managerImage;
+  File? _shopImage;
+
+  Future<Map<String, dynamic>> _getDataFromSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mobile = prefs.getString('mobile') ?? '';
+    final shopName = prefs.getString('shop_name') ?? '';
+    final openTime = prefs.getString('open_time') ?? '';
+    final closeTime = prefs.getString('close_time') ?? '';
+    final shopAddress = prefs.getString('shop_address') ?? '';
+    final latitude = prefs.getDouble('latitude') ?? 0.0;
+    final longitude = prefs.getDouble('longitude') ?? 0.0;
+    print("$mobile");
+
+    final data = {
+      'Mobile': mobile,
+      'Shop Name': shopName,
+      'Open Time': openTime,
+      'Close Time': closeTime,
+      'Shop Address': shopAddress,
+      'Latitude': latitude,
+      'Longitude': longitude,
+    };
+
+    return data;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+   ///// _getDataFromSharedPreferences();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+    return Scaffold(
+      backgroundColor: colors.scaffold_background_color,
+      appBar: AppBar(
+        backgroundColor: colors.white,
+        elevation: 0,
+        title: const Text("Vendor KYC",
+            style: TextStyle(fontWeight: FontWeight.bold, color: colors.black)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Login(),
+                ));
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+            color: colors.black,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              const SizedBox(
+                height: 20,
+              ),
+              _buildImageContainer(
+                image: _adhaarImage,
+                onTap: () {
+                  _showImagePickerOptions(ImageType.License);
+                  setState(() {
+
+                  });
+                },
+                label: "Aadhaar Front *",
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+              _buildImageContainer(
+                image: _adhaarImageBack,
+                onTap: () {
+                  _showImagePickerOptions(ImageType.AadharBack);
+                  setState(() {
+
+                  });
+                },
+                label: "Aadhaar Back *",
+
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              _buildImageContainer(
+                image: _panCardImage,
+                onTap: () {
+                  _showImagePickerOptions(ImageType.Front);
+                  setState(() {
+
+                  });
+                },
+                label: "PAN Card * ",
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+
+
+
+              _buildImageContainer(
+                image: _gstImage,
+                onTap: () {
+                  _showImagePickerOptions(ImageType.GST);
+                  setState(() {
+
+                  });
+                },
+                label: "GST Certificate",
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              isLoading == true ? Center(child: CircularProgressIndicator()) :
+
+              Container(
+                width: double.infinity,
+                height: 50,
+
+                child: ElevatedButton(
+                  onPressed: () async {
+
+                    if (_adhaarImage == null ||
+                        _adhaarImageBack == null ||
+                        _panCardImage == null
+                    ) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Please provide Aadhar and Pan Card image  '),
+                        ),
+                      );
+
+                      return;
+                    }else {
+                      setState(() {
+                        isLoading=true;
+                      });
+                      sendImageToApi();
+                    }
+
+
+                   /* Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const Login()),
+                    );*/
+                  },
+
+
+
+                  child: const Text(
+                    "Next",
+                    style: TextStyle(fontSize: 20),
+
+                  ),
+
+
+                  style: ButtonStyle(
+                    foregroundColor:
+                    MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                            if (_adhaarImage == null ||
+                                _adhaarImageBack == null ||
+                                _panCardImage == null
+                            ) {
+                          return Colors.purple;
+                        }
+                        return Colors.white;
+                      },
+
+                    ),
+
+                    backgroundColor:
+                    MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                            if (_adhaarImage == null ||
+                                _adhaarImageBack == null ||
+                                _panCardImage == null
+                            ) {
+                          return Colors.grey;
+                        }
+                        return Colors.green;
+                      },
+
+                    ),
+
+
+                  ),
+
+
+
+
+
+
+                ),
+
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool isValidIFSCCode(String ifscCode) {
+    return ifscCode.length == 11;
+  }
+
+
+  //---------------Api Calling ----------------
+
+  sendImageToApi() async {
+    var uri =
+    Uri.parse("https://logicalsofttech.com/QuixiCare/Vendor_api/vendor_save_kyc");
+    var request = http.MultipartRequest('POST', uri);
+
+    if (_gstImage != null) {
+      var stream = http.ByteStream(_gstImage!.openRead());
+      var length = await _gstImage!.length();
+      var multipartFile = http.MultipartFile(
+        'gst_certificate',
+        stream,
+        length,
+        filename: _gstImage!.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+      request.files.add(multipartFile);
+    }
+    if (_adhaarImage != null) {
+      var stream1 = http.ByteStream(_adhaarImage!.openRead());
+      var length1 = await _adhaarImage!.length();
+      var multipartFile1 = http.MultipartFile(
+        'adhar_copy_frent',
+        stream1,
+        length1,
+        filename: _adhaarImage!.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+      request.files.add(multipartFile1);
+    }
+
+    if (_adhaarImageBack != null) {
+      var stream1 = http.ByteStream(_adhaarImageBack!.openRead());
+      var length1 = await _adhaarImageBack!.length();
+      var multipartFile3 = http.MultipartFile(
+        'adhar_copy_back',
+        stream1,
+        length1,
+        filename: _adhaarImageBack!.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+      request.files.add(multipartFile3);
+    }
+
+
+    if (_panCardImage != null) {
+      var stream2 = http.ByteStream(_panCardImage!.openRead());
+      var length2 = await _panCardImage!.length();
+      var multipartFile2 = http.MultipartFile(
+        'pan_card_copy',
+        stream2,
+        length2,
+        filename: _panCardImage!.path,
+        contentType: MediaType('image', 'jpeg'),
+      );
+      request.files.add(multipartFile2);
+    }
+
+    SharedPreferences p = await SharedPreferences.getInstance();
+    request.fields['vendor_id'] = p.getString("userid").toString();
+    // request.fields['gst_no'] = gstnum.text.toString();
+    try {
+      http.StreamedResponse response = await request.send();
+      print("response.........$response");
+      if (response.statusCode == 200) {
+
+        setState(() {
+          isLoading=false;
+        });
+        var responseString = await response.stream.bytesToString();
+        print("Response: $responseString");
+        var jsonResponse = json.decode(responseString);
+        print(jsonResponse);
+       /////////// SharedPreferences prefs = await SharedPreferences.getInstance();
+       //////////// prefs.setBool("isLogin", true);
+        print("Success: Uploaded successfully");
+        Get.to(() => Login());
+        Get.snackbar('Note','KYC need to be approved by admin');
+        return "done";
+      } else {
+        print("Failed to update profile. Status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Failed to update profile: $e");
+      return null;
+    }
+  }
+
+  void _showManagerImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openManagerCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openManagerGallery();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openManagerCamera() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageCamera = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (pickedImageCamera != null) {
+      setState(() {
+        _managerImage = File(pickedImageCamera.path);
+      });
+    }
+  }
+
+  void _openManagerGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageGallery = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImageGallery != null) {
+      setState(() {
+        _managerImage = File(pickedImageGallery.path);
+      });
+    }
+  }
+
+  void _showShopImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openShopCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openShopGallery();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openShopCamera() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageCamera = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (pickedImageCamera != null) {
+      setState(() {
+        _shopImage = File(pickedImageCamera.path);
+      });
+    }
+  }
+
+  void _openShopGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageGallery = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImageGallery != null) {
+      setState(() {
+        _shopImage = File(pickedImageGallery.path);
+      });
+    }
+  }
+
+
+  File? _gstImage;
+  File? _adhaarImage;
+  File? _adhaarImageBack;
+  File? _panCardImage;
+
+  Widget _buildImageContainer({
+    required File? image,
+    required Function onTap,
+    required String label,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+              color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onTap: () {
+            onTap();
+          },
+          child: DottedBorder(
+            color: Colors.grey,
+            strokeWidth: 1,
+            dashPattern: [
+              5,
+              5,
+            ],
+            child: Container(
+              height: 150,
+              width: double.infinity,
+              // decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+              child: image != null
+                  ? Image.file(image, fit: BoxFit.fill)
+                  : const Icon(Icons.cloud_upload_outlined,
+                      size: 64,
+                      color: Colors.green), // Replace with photo icon
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  void _showImagePickerOptions(ImageType imageType) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openCamera(imageType);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openGallery(imageType);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openCamera(ImageType imageType) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageCamera = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (pickedImageCamera != null) {
+      setState(() {
+        switch (imageType) {
+          case ImageType.GST:
+            _gstImage = File(pickedImageCamera.path);
+            break;
+          case ImageType.License:
+            _adhaarImage = File(pickedImageCamera.path);
+            break;
+          case ImageType.Front:
+            _panCardImage = File(pickedImageCamera.path);
+            break;
+          case ImageType.AadharBack:
+            _adhaarImageBack = File(pickedImageCamera.path);
+            break;
+        }
+      });
+    }
+  }
+
+  void _openGallery(ImageType imageType) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImageGallery = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImageGallery != null) {
+      setState(() {
+        switch (imageType) {
+          case ImageType.GST:
+            _gstImage = File(pickedImageGallery.path);
+            break;
+          case ImageType.License:
+            _adhaarImage = File(pickedImageGallery.path);
+            break;
+          case ImageType.Front:
+            _panCardImage = File(pickedImageGallery.path);
+            break;
+          case ImageType.AadharBack:
+            _adhaarImageBack = File(pickedImageGallery.path);
+            break;
+        }
+      });
+    }
+  }
+}
+
+enum ImageType {
+  GST,
+  License,
+  Front,
+  AadharBack,
+}
