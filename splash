@@ -1,0 +1,67 @@
+import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../uiltis/color.dart';
+import 'Navagation_bar.dart';
+import 'login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class Splash extends StatefulWidget {
+  const Splash({super.key});
+
+  @override
+  State<Splash> createState() => _SplashState();
+}
+
+class _SplashState extends State<Splash> {
+  // final splash_controller = Get.put(Splash_controller());
+  SharedPreferences? p;
+  @override
+  void initState() {
+
+    super.initState();
+
+    Timer(const Duration(seconds: 4), () async {
+      //  Get.to(() => const Signin_email_vendor());
+      await _handle(Permission.location);
+     _navigate();
+    });
+  }
+
+  _navigate() async {
+    p = await SharedPreferences.getInstance();
+    if (p!.getBool("isLogin") == true) {
+      Get.offAll(const Nav_bar());
+    }
+    else{
+      Future.delayed(Duration(seconds: 4), () {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => Login()));
+      });
+    }
+
+  }
+
+
+  _handle(Permission permission) async {
+    final sstatus = await permission.request();
+    var status = await permission.status;
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              child: Image.asset(
+                "assets/image/logo1.png",
+                scale: 2,
+              ),
+            ),
+          )),
+    );
+  }
+}
