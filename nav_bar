@@ -1,0 +1,96 @@
+import 'package:flutter/material.dart';
+import 'package:QuixiCareService/view/histroy.dart';
+import 'package:QuixiCareService/view/profile.dart';
+import '../uiltis/color.dart';
+import 'home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class Nav_bar extends StatefulWidget {
+  const Nav_bar({super.key});
+
+  @override
+  State<Nav_bar> createState() => _Nav_barState();
+}
+
+class _Nav_barState extends State<Nav_bar> {
+  int selectedIndex = 0;
+
+  void onItemTapped(int index) {
+    setState(() {
+      selectedIndex = index;
+      if (index == 0) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Nav_bar(),
+            ));
+      }
+    });
+  }
+
+  static final List<Widget> _widgetOptions = <Widget>[
+
+    Home(),
+    // Add_category(),
+    History(),
+    Profile(),
+  ];
+
+  // NotificationService notificationService = NotificationService();
+
+  @override
+  void initState()  {
+    super.initState();
+    _getID();
+    //   notificationService.requrstNotificationPermission();
+    //   notificationService.firebaseinit(context);
+    //   notificationService.setupIntractMessage(context);
+    //   notificationService.isDeviceTokenRefresh();
+    //   notificationService.getDeviceToken().then((value) {
+    //     print("I Got Token ${value}");
+    //   });
+
+    setState(() {});
+  }
+  _getID() async {
+    SharedPreferences p = await SharedPreferences.getInstance();
+    print("vendor_id...........${p.getString("userid").toString()}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: selectedIndex,
+        children: _widgetOptions,
+      ),
+
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: selectedIndex,
+        onTap: onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        fixedColor: colors.button_color,
+        items: [
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.store),
+          //   label: 'Products',
+          // ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view),
+            label: 'Menu',
+          ),
+        ],
+      ),
+    );
+  }
+}
