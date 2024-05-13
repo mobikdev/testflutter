@@ -1,0 +1,1267 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:QuixiCareService/cutom_widgets/button.dart';
+import 'package:QuixiCareService/uiltis/color.dart';
+import 'package:QuixiCareService/view/order_detail.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+//import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+import '../model/new_booking_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+
+import 'package:cached_network_image/cached_network_image.dart';
+
+
+
+class NewOrderWidget extends StatefulWidget {
+  const NewOrderWidget({super.key});
+
+  @override
+  State<NewOrderWidget> createState() => _NewOrderWidgetState();
+}
+
+class _NewOrderWidgetState extends State<NewOrderWidget> {
+
+  static String path="";
+  static String msg="";
+/*
+@override
+ initState() {
+    // TODO: implement initState
+    super.initState();
+    print("logicalsoftech");
+    getBookings();
+  }
+  */
+
+
+
+// variable to call and store future list of posts
+ // Future<List<NewBooking>> bookingsFuture = getBookings();
+
+
+
+  // function to fetch data from api and return future list of posts
+  static Future<List<NewBooking>> getBookings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final Uri uri = Uri.parse("https://logicalsofttech.com/QuixiCare/Vendor_api/get_upcoming_booking");
+    final map = <String, dynamic>{};
+    map['category_id'] = prefs.getString("catid").toString();
+
+    print("category_id="+prefs.getString("catid").toString());
+    final response = await http.post
+      (uri, body:map);
+
+    if (response.statusCode == 200) {
+
+      final Map<String,dynamic> result = json.decode(response.body);
+      List<dynamic> body = [];
+      if(result["result"] == "true") {
+        body = result["data"];
+        path = result["path"];
+      }
+      else {
+        body = [];
+        msg = result["msg"];
+
+      }
+      print(body);
+      return body.map((e) => NewBooking.fromJson(e)).toList();
+
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
+
+
+  }
+
+
+
+  // build function
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        // FutureBuilder
+        child: FutureBuilder<List<NewBooking>>(
+          future: getBookings(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // until data is fetched, show loader
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}'); // Show an error message if data fetching fails
+            }
+
+            if (snapshot.hasData) {
+              // once data is fetched, display it on screen (call buildPosts())
+              final bookings = snapshot.data!;
+              return buildNewBookings(bookings);
+
+            } else {
+              // if no data, show simple Text
+              return  Text("msg="+msg);
+            }
+          },
+        ),
+
+
+      ),
+    );
+  }
+
+
+
+
+
+  @override
+  Widget buildNewBookings(List<NewBooking> newbookings) {
+ // Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+
+    if(newbookings.length > 0) {
+      /*
+      return Container(
+        color: Colors.orange,
+        child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: newbookings.length,
+        // itemCount: 3,
+        itemBuilder: (context, index) {
+      //newbookings.sort((a,b)=>a.id.compareTo(b.id));
+        final newbooking = newbookings[index];
+
+
+      );
+    */
+
+    return Container(
+        color: Colors.white,
+        alignment: Alignment.topLeft,
+       // padding: const EdgeInsets.only(bottom: 10.0,top:0.0),
+        margin: const EdgeInsets.all(0.0),
+        child: Container(
+
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: newbookings.length,
+             // itemCount: 3,
+              itemBuilder: (context, index) {
+                //newbookings.sort((a,b)=>a.id.compareTo(b.id));
+                final newbooking = newbookings[index];
+
+
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child:
+
+                    GestureDetector(
+                      onTap: () {
+                        // String orderId =
+                        //     yourDataList[index]
+                        //         ["orderNumber"];
+                        // String userId =
+                        //     yourDataList[index]
+                        //         ["userid"];
+                      //  Get.to(Details(bookingtype:newbooking));
+
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Details(bookingtype:newbooking )),).then((res) => refreshPage());
+
+
+
+
+                      },
+                      child:
+
+                     /*
+
+                      Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(15),
+
+                        child: Container(
+                          // height: 200,
+
+                          decoration: BoxDecoration(
+                            color: colors.white
+
+                            ,
+                            borderRadius: BorderRadius.circular(15),
+
+                          ),
+                          child:
+
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: 10.0,
+                              top: 10,
+                              bottom: 8,
+                              left: 10,
+                            ),
+                            child: Column(
+                              children: [
+
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: h / 15,
+                                      // width: w/5,
+                                      child: Image.network(path + newbooking.image,fit:BoxFit.cover,width:70),
+                                    ),
+                                    SizedBox(
+                                      width: w / 20,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Booking Number: "+ newbooking.id,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                           // SizedBox(width: w/7,),
+
+
+                                          ],
+                                        ),
+                                        SizedBox(height: h / 100),
+                                        Row(
+                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
+                                          children: [
+
+                                               Text(
+                                                "Date: "+newbooking.date,
+                                                style: const TextStyle(
+                                                  color: colors.hintext_shop,
+                                                ),
+                                              ),
+
+                                            // Spacer(),
+                                            SizedBox(width: w/7,),
+
+                                            Text(
+                                              '₹ '+newbooking.totalAmount,
+                                              style: const TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+
+                                        Row(
+                                          children: [
+                                            Text("Booking Status :"),
+                                            Text(newbooking.status),
+                                          ],
+                                        ),
+                                        //     const Text(
+                                        //   "Product List :",
+                                        //   style: TextStyle(
+                                        //     color: colors
+                                        //         .hintext_shop,
+                                        //   ),
+                                        // ),
+
+                                        const SizedBox(height: 4),
+
+                                        Row(
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Container(
+                                                  width: w / 3,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        "Appointment Date",
+                                                      ),
+                                                      Text(newbooking.appointmentDate.toString(),style: TextStyle(
+                                                          color: Colors.grey
+                                                      ),)
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(width: 50,),
+
+                                            Column(
+                                              children: [
+                                                Container(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Time',
+                                                      ),
+                                                      Text(newbooking.time,style: TextStyle(color: Colors.grey),)
+                                                    ],
+                                                  ),
+
+
+
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+
+
+
+                                SizedBox(height: h / 50),
+                                Container(
+                                  width: w / 1,
+                                  height: h / 1000,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: h / 100),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    if (false) ...[
+
+                                    ],
+                                    if ("accept" == "accept") ...[
+                                      ElevatedButton(
+                                        style: ButtonStyle(
+
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              side:
+                                              const BorderSide(color: Colors.red),
+                                              borderRadius: BorderRadius.circular(15),
+
+                                            ),
+                                          ),
+                                          backgroundColor:
+
+                                          MaterialStateProperty.all(Colors.white),
+
+                                        ),
+                                        onPressed:
+
+                                        () async {
+
+                print("booking_id="+newbooking.id);
+                print("user_id="+newbooking.userId);
+                print("date="+DateFormat('dd-MM-yyyy').format(DateTime.now()));
+                print("time="+DateFormat('HH:mm a').format(DateTime.now()));
+                print("time="+DateFormat('KK:mm a').format(DateTime.now()));
+
+
+                final Uri uri = Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/booking_rejected');
+                final map = <String, dynamic>{};
+                map['user_id'] = newbooking.userId;
+                map['booking_id'] = newbooking.id;
+                map['reject_date'] = DateFormat('dd-MM-yyyy').format(DateTime.now());
+                map['reject_time'] = DateFormat('KK:mm a').format(DateTime.now());
+
+
+
+
+                http.Response response = await http.post(
+                uri,
+                body: map,
+                );
+                print("booking rejected ..");
+                Get.snackbar("Note", "Booking Rejected");
+                setState(() {
+
+                });
+
+
+
+                },
+
+
+                // () async {
+                                          // await orderstatus(
+                                          //     "Reject",
+                                          //     yourDataList[index]
+                                          //         [
+                                          //         "orderNumber"],
+                                          //     yourDataList[index]["userid"]
+                                          //         .toString());
+                                          // ScaffoldMessenger.of(
+                                          //         context)
+                                          //     .showSnackBar(
+                                          //   const SnackBar(
+                                          //     content:
+                                          //         Text('Order Reject Successfully'),
+                                          //     duration:
+                                          //         Duration(seconds: 2),
+                                          //     backgroundColor:
+                                          //         Colors.red,
+                                          //   ),
+                                          // );
+                                         // print("reject button clicked");
+                                     //   },
+                                        // : null,
+                                        child: const Text(
+                                          "Reject",
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ),
+                                      ElevatedButton(
+                                        style: ButtonStyle(
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),
+                                          ),
+                                          backgroundColor:
+                                          MaterialStateProperty.all(Colors.white),
+                                        ),
+                                        onPressed:
+
+
+                                            () async {
+
+                                              print("id="+newbooking.id);
+                                              print("userid="+newbooking.userId);
+
+
+                                              final Uri uri = Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/booking_accept');
+                                              final map = <String, dynamic>{};
+                                              map['user_id'] = newbooking.userId;
+                                              map['booking_id'] = newbooking.id;
+                                              map['accept_date'] = DateFormat('dd-MM-yyyy').format(DateTime.now());
+                                              map['accept_time'] = DateFormat('KK:mm a').format(DateTime.now());
+
+
+
+                                              http.Response response = await http.post(
+                                                uri,
+                                                body: map,
+                                              );
+
+
+
+
+
+                                              try {
+                                               // var response = await request.send();
+                                               // var responseStream = await response.stream.bytesToString();
+                                              //  var jsonResponse = jsonDecode(response);
+                                              //  print("booking="+jsonResponse);
+                                                 if(true){
+                                                 //  setState(() {
+
+                                                   //});
+                                              //  if (jsonResponse['result'] == 'true') {
+                                                //  var userId = jsonResponse['data']['id'];
+
+                                                 // prefs.setString("result", jsonResponse['result']);
+                                                 // prefs.setString("userid", userId);
+                                                 // await UserProgressHelper.setUserProgress(1);
+                                               //   Navigator.pushAndRemoveUntil(context,  MaterialPageRoute(
+                                                   //   builder: (_) => Signup_form1()), (route) => false);
+                                                  Get.snackbar("Note", "Booking Accepted");
+
+                                                  setState(() {
+
+                                                  });
+                                                  print("booking accepted..");
+                                                } else {
+                                                  // prefs.setBool("isLogin", false);
+                                                  //Get.snackbar("Error Note", jsonResponse['msg']);
+                                                }
+                                              } on SocketException catch (e) {
+                                                Get.snackbar('Exception', e.toString());
+                                              } on FormatException catch (e) {
+                                                Get.snackbar('Exception', e.toString());
+                                              } catch (e) {
+                                                Get.snackbar('Exception', e.toString());
+                                              }
+
+
+                                              /*
+                                             final response = await http.put(
+                                                  Uri.parse("https://logicalsofttech.com/QuixiCare/Vendor_api/booking_accept"),
+                                                  headers: <String, String>{
+                                                    'Content-Type': 'application/json; charset=UTF-8',
+                                                  },
+                                                  body: jsonEncode(<String, String>{
+                                                    'booking_id': newbooking.id,
+                                                    'user_id' : newbooking.userId,
+                                                  }),
+                                              );
+
+                                              */
+
+
+
+
+                                             // if (response.statusCode == 200) {
+                                                // If the server did return a 200 OK response,
+                                                // then parse the JSON.
+
+                                                /*
+                                                final Map<String,dynamic> result = json.decode(response.body);
+                                                List<dynamic> body = [];
+                                                if(result["result"] == "true") {
+                                                  body = result["data"];
+                                                  path = result["path"];
+                                                }
+                                                else {
+                                                  body = [];
+                                                  msg = result["msg"];
+
+                                                }
+                                                print(body);
+                                                return body.map((e) => NewBooking.fromJson(e)).toList();
+                                               */
+                                               //   setState(() {
+
+                                               //   });
+
+
+                                             // } else {
+                                                // If the server did not return a 200 OK response,
+                                                // then throw an exception.
+                                            //    throw Exception('Failed to load album');
+                                            //  }
+
+
+                                          // await orderstatus(
+                                          //     "Accept",
+                                          //     yourDataList[index]["orderNumber"]
+                                          //         .toString(),
+                                          //     yourDataList[index]["userid"]
+                                          //         .toString());
+                                          // print("jkjkjkgjkghjkgjkg" +
+                                          //     yourDataList[index]["orderNumber"]
+                                          //         .toString());
+                                          // ScaffoldMessenger.of(
+                                          //         context)
+                                          //     .showSnackBar(
+                                          //   const SnackBar(
+                                          //     content:
+                                          //         Text('Order Accept Successfully'),
+                                          //     duration:
+                                          //         Duration(seconds: 2),
+                                          //     backgroundColor:
+                                          //         Colors.green,
+                                          //   ),
+                                          // );
+                                          print("accept button clicked..");
+                                         }
+
+
+
+                                        ,
+                                        // : null,
+                                        child: const Text(
+                                          "Accept",
+                                          style: TextStyle(
+                                              color: colors.button_color,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                // Text(
+                                //   'Order No: ${yourDataList[index]["orderNumbertt"]}',
+                                //   style: TextStyle(
+                                //     color: colors.hintext_shop,
+                                //   ),
+                                // ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                     */
+
+                      Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(15),
+
+                        child: Container(
+                          // height: 200,
+
+                          decoration: BoxDecoration(
+                            color: colors.white
+
+                            ,
+                            borderRadius: BorderRadius.circular(15),
+
+                          ),
+                          child:
+
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: 10.0,
+                              top: 10,
+                              bottom: 8,
+                              left: 10,
+                            ),
+                            child: Column(
+                              children: [
+
+
+                               Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+
+                                      SizedBox(
+                                          width: w * 0.18,
+                                          child:
+                                          Container(
+                                              alignment: Alignment.topLeft,
+                                              color:Colors.white,
+                                              child:
+
+
+                                                Center(
+                                                  child: CircleAvatar(
+                                                    radius: 30.0,
+                                                   // backgroundImage: NetworkImage(path + newbooking.image),
+                                                   // backgroundImage:NetworkImage('https://picsum.photos/250?image=9'),
+                                                    backgroundImage: AssetImage('assets/image/profile_blank.jpg'),
+                                                    backgroundColor: Colors.transparent,
+
+                                                  ),
+                                                )
+
+
+                                             // height:100,
+                                          )
+                                      ),
+
+                                      Expanded(
+                                          flex: 1,
+                                          child:
+                                          Container(
+                                              color:Colors.white,
+                                              padding: EdgeInsets.symmetric(horizontal:10),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+
+                                                  Text(
+                                                    "Booking Number : "+ newbooking.id,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w400,
+                                                      fontSize: 14,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+
+                                                  SizedBox(height: h / 100),
+
+
+                                                   Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+
+                                                        Text(
+                                                          "Date: "+newbooking.date,
+                                                          maxLines: null,
+                                                          style: const TextStyle(
+                                                            color: colors.hintext_shop,
+                                                          ),
+                                                        ),
+
+
+                                                        Text(
+                                                          '₹ '+newbooking.totalAmount,
+                                                          maxLines: null,
+                                                          style: const TextStyle(
+                                                            fontSize: 17,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+
+
+                                                      ],
+                                                    ),
+
+
+
+
+
+
+                                                  Text(
+                                                    "Customer Name : "+ newbooking.fullName,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w400,
+                                                      fontSize: 14,
+                                                      color: colors.hintext_shop,
+                                                    ),
+                                                  ),
+
+
+                                                  SizedBox(height: h / 100),
+
+                                                  Text("Booking Status :"+newbooking.status),
+
+                                                  SizedBox(height: h / 100),
+
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text("Appointment Date"),
+                                                          Text(newbooking.appointmentDate.toString(),style: TextStyle(
+                                                              color: Colors.grey
+                                                          ),)
+                                                        ],
+                                                      ),
+
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text("Time"),
+                                                          Text(newbooking.time,style: TextStyle(color: Colors.grey),)      ],
+                                                      ),
+                                                    ],
+                                                  )
+
+
+
+
+
+
+
+
+                                                ],
+                                              ),
+                                          )
+                                      )
+
+                                    ],
+                                  ),
+
+
+                             /*
+                                Container(
+                                  height: 100,
+                                  width:double.infinity,
+                                  color: Colors.brown,
+                                  child:
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Hello"),
+                                      Text("Bye"),
+                                    ],
+
+                                  )
+
+                                ),
+
+                                */
+
+
+
+                                /*
+
+                                Container(
+                                    height: 100,
+                                    width:double.infinity,
+                                    color: Colors.brown,
+                                    child:
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+
+                                        Text("Hello"),
+
+                                      ],
+                                    )
+
+
+
+                                ),
+
+                             */
+
+
+
+                                /*
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: h / 15,
+                                      // width: w/5,
+                                      child: Image.network(path + newbooking.image,fit:BoxFit.cover,width:70),
+                                    ),
+                                    SizedBox(
+                                      width: w / 20,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Booking Number: "+ newbooking.id,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                            // SizedBox(width: w/7,),
+
+
+                                          ],
+                                        ),
+                                        SizedBox(height: h / 100),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
+                                          children: [
+
+                                            Text(
+                                              "Date: "+newbooking.date,
+                                              style: const TextStyle(
+                                                color: colors.hintext_shop,
+                                              ),
+                                            ),
+
+                                            // Spacer(),
+                                            SizedBox(width: w/7,),
+
+                                            Text(
+                                              '₹ '+newbooking.totalAmount,
+                                              style: const TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+
+                                        Row(
+                                          children: [
+                                            Text("Booking Status :"),
+                                            Text(newbooking.status),
+                                          ],
+                                        ),
+                                        //     const Text(
+                                        //   "Product List :",
+                                        //   style: TextStyle(
+                                        //     color: colors
+                                        //         .hintext_shop,
+                                        //   ),
+                                        // ),
+
+                                        const SizedBox(height: 4),
+
+                                        Row(
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Container(
+                                                  width: w / 3,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        "Appointment Date",
+                                                      ),
+                                                      Text(newbooking.appointmentDate.toString(),style: TextStyle(
+                                                          color: Colors.grey
+                                                      ),)
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(width: 50,),
+
+                                            Column(
+                                              children: [
+                                                Container(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Time',
+                                                      ),
+                                                      Text(newbooking.time,style: TextStyle(color: Colors.grey),)
+                                                    ],
+                                                  ),
+
+
+
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              */
+
+
+                              /*
+                                SizedBox(height: h / 50),
+                                Container(
+                                  width: w / 1,
+                                  height: h / 1000,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: h / 100),
+
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    if (false) ...[
+
+                                    ],
+                                    if ("accept" == "accept") ...[
+                                      ElevatedButton(
+                                        style: ButtonStyle(
+
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              side:
+                                              const BorderSide(color: Colors.red),
+                                              borderRadius: BorderRadius.circular(15),
+
+                                            ),
+                                          ),
+                                          backgroundColor:
+
+                                          MaterialStateProperty.all(Colors.white),
+
+                                        ),
+                                        onPressed:
+
+                                            () async {
+
+                                          print("booking_id="+newbooking.id);
+                                          print("user_id="+newbooking.userId);
+                                          print("date="+DateFormat('dd-MM-yyyy').format(DateTime.now()));
+                                          print("time="+DateFormat('HH:mm a').format(DateTime.now()));
+                                          print("time="+DateFormat('KK:mm a').format(DateTime.now()));
+
+
+                                          final Uri uri = Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/booking_rejected');
+                                          final map = <String, dynamic>{};
+                                          map['user_id'] = newbooking.userId;
+                                          map['booking_id'] = newbooking.id;
+                                          map['reject_date'] = DateFormat('dd-MM-yyyy').format(DateTime.now());
+                                          map['reject_time'] = DateFormat('KK:mm a').format(DateTime.now());
+
+
+
+
+                                          http.Response response = await http.post(
+                                            uri,
+                                            body: map,
+                                          );
+                                          print("booking rejected ..");
+                                          Get.snackbar("Note", "Booking Rejected");
+                                          setState(() {
+
+                                          });
+
+
+
+                                        },
+
+
+                                        // () async {
+                                        // await orderstatus(
+                                        //     "Reject",
+                                        //     yourDataList[index]
+                                        //         [
+                                        //         "orderNumber"],
+                                        //     yourDataList[index]["userid"]
+                                        //         .toString());
+                                        // ScaffoldMessenger.of(
+                                        //         context)
+                                        //     .showSnackBar(
+                                        //   const SnackBar(
+                                        //     content:
+                                        //         Text('Order Reject Successfully'),
+                                        //     duration:
+                                        //         Duration(seconds: 2),
+                                        //     backgroundColor:
+                                        //         Colors.red,
+                                        //   ),
+                                        // );
+                                        // print("reject button clicked");
+                                        //   },
+                                        // : null,
+                                        child: const Text(
+                                          "Reject",
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ),
+                                      ElevatedButton(
+                                        style: ButtonStyle(
+                                          shape: MaterialStateProperty.all(
+                                            RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),
+                                          ),
+                                          backgroundColor:
+                                          MaterialStateProperty.all(Colors.white),
+                                        ),
+                                        onPressed:
+
+
+                                            () async {
+
+                                          print("id="+newbooking.id);
+                                          print("userid="+newbooking.userId);
+
+
+                                          final Uri uri = Uri.parse('https://logicalsofttech.com/QuixiCare/Vendor_api/booking_accept');
+                                          final map = <String, dynamic>{};
+                                          map['user_id'] = newbooking.userId;
+                                          map['booking_id'] = newbooking.id;
+                                          map['accept_date'] = DateFormat('dd-MM-yyyy').format(DateTime.now());
+                                          map['accept_time'] = DateFormat('KK:mm a').format(DateTime.now());
+
+
+
+                                          http.Response response = await http.post(
+                                            uri,
+                                            body: map,
+                                          );
+
+
+
+
+
+                                          try {
+                                            // var response = await request.send();
+                                            // var responseStream = await response.stream.bytesToString();
+                                            //  var jsonResponse = jsonDecode(response);
+                                            //  print("booking="+jsonResponse);
+                                            if(true){
+                                              //  setState(() {
+
+                                              //});
+                                              //  if (jsonResponse['result'] == 'true') {
+                                              //  var userId = jsonResponse['data']['id'];
+
+                                              // prefs.setString("result", jsonResponse['result']);
+                                              // prefs.setString("userid", userId);
+                                              // await UserProgressHelper.setUserProgress(1);
+                                              //   Navigator.pushAndRemoveUntil(context,  MaterialPageRoute(
+                                              //   builder: (_) => Signup_form1()), (route) => false);
+                                              Get.snackbar("Note", "Booking Accepted");
+
+                                              setState(() {
+
+                                              });
+                                              print("booking accepted..");
+                                            } else {
+                                              // prefs.setBool("isLogin", false);
+                                              //Get.snackbar("Error Note", jsonResponse['msg']);
+                                            }
+                                          } on SocketException catch (e) {
+                                            Get.snackbar('Exception', e.toString());
+                                          } on FormatException catch (e) {
+                                            Get.snackbar('Exception', e.toString());
+                                          } catch (e) {
+                                            Get.snackbar('Exception', e.toString());
+                                          }
+
+
+                                          /*
+                                             final response = await http.put(
+                                                  Uri.parse("https://logicalsofttech.com/QuixiCare/Vendor_api/booking_accept"),
+                                                  headers: <String, String>{
+                                                    'Content-Type': 'application/json; charset=UTF-8',
+                                                  },
+                                                  body: jsonEncode(<String, String>{
+                                                    'booking_id': newbooking.id,
+                                                    'user_id' : newbooking.userId,
+                                                  }),
+                                              );
+
+                                              */
+
+
+
+
+                                          // if (response.statusCode == 200) {
+                                          // If the server did return a 200 OK response,
+                                          // then parse the JSON.
+
+                                          /*
+                                                final Map<String,dynamic> result = json.decode(response.body);
+                                                List<dynamic> body = [];
+                                                if(result["result"] == "true") {
+                                                  body = result["data"];
+                                                  path = result["path"];
+                                                }
+                                                else {
+                                                  body = [];
+                                                  msg = result["msg"];
+
+                                                }
+                                                print(body);
+                                                return body.map((e) => NewBooking.fromJson(e)).toList();
+                                               */
+                                          //   setState(() {
+
+                                          //   });
+
+
+                                          // } else {
+                                          // If the server did not return a 200 OK response,
+                                          // then throw an exception.
+                                          //    throw Exception('Failed to load album');
+                                          //  }
+
+
+                                          // await orderstatus(
+                                          //     "Accept",
+                                          //     yourDataList[index]["orderNumber"]
+                                          //         .toString(),
+                                          //     yourDataList[index]["userid"]
+                                          //         .toString());
+                                          // print("jkjkjkgjkghjkgjkg" +
+                                          //     yourDataList[index]["orderNumber"]
+                                          //         .toString());
+                                          // ScaffoldMessenger.of(
+                                          //         context)
+                                          //     .showSnackBar(
+                                          //   const SnackBar(
+                                          //     content:
+                                          //         Text('Order Accept Successfully'),
+                                          //     duration:
+                                          //         Duration(seconds: 2),
+                                          //     backgroundColor:
+                                          //         Colors.green,
+                                          //   ),
+                                          // );
+                                          print("accept button clicked..");
+                                        }
+
+
+
+                                        ,
+                                        // : null,
+                                        child: const Text(
+                                          "Accept",
+                                          style: TextStyle(
+                                              color: colors.button_color,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                               */
+
+                                // Text(
+                                //   'Order No: ${yourDataList[index]["orderNumbertt"]}',
+                                //   style: TextStyle(
+                                //     color: colors.hintext_shop,
+                                //   ),
+                                // ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+
+
+                    ),
+                  );
+
+
+
+              },
+            )));
+
+    } else
+
+       return Center(child: new Container(child:Text(msg)));
+
+  }
+
+  refreshPage() {
+
+    setState(() {
+
+    });
+  }
+
+
+
+}
+
+
+//     },
+//   ),
+// ),
+// ),
+
+// }
+// }
